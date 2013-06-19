@@ -3,6 +3,11 @@ LIExport
 
 LinkeIn Export Contacts tool
 
+Helps export contacts from LinkedIn contacts page. More information and example of usage you can find here <http://blog.dataart.com/extending-linkedin-functionality-export-selected-connections-to-a-csv-file/>.
+
+Licence
+========
+
     Copyright (C) 2013 DataArt
 
     This program is free software: you can redistribute it and/or modify
