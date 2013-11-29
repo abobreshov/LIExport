@@ -16,123 +16,154 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-(function(run){
-function getDate() {
-    return new Date().toISOString().substring(0,16).replace('T',' ');
-}
-
-function loadScript(src, callback) {
-    var s, r;
-    r = false;
-    s = document.createElement('script');
-    s.type = 'text/javascript';
-    s.src = src;
-    s.onload = s.onreadystatechange = function () {
-        if (!r && (!this.readyState || this.readyState == 'complete')) {
-            r = true;
-            callback();
-        }
-    };
-    document.body.appendChild(s);
-}
-
-function getMemberIds() {
-    var el = $('.send-multi-message').removeClass('disabled')[0];
-    var old = el.attributes['data-url'].value;
-    el.setAttribute('data-url', '#test');
-    el.click();
-    var ids = window.location.hash.split('=');
-    if (ids.length < 2) {
-        alert('Please check that some contacts are selected and the right pane contains the contacts list.');
-        return [];
+(function (run) {
+    'use strict';
+    function getDate() {
+        return new Date().toISOString().substring(0, 16).replace('T', ' ');
     }
-    el.setAttribute('data-url', old);
-    window.location.hash = null;
-    return ids[1].split(',');
-}
 
-function processConnDetails(s, flds) {
-    var val = {};
-    val.Name = $('.connection-name a', s)[0].innerHTML;
-    $('dt',s).each(function(){
-        var v = $(this).next('dd');
-        var vt = v.html();
-        var r = vt.match(/['"]mailto:([^'"]*)['"]/);
-        if (r != null)
-            vt = r[1];
-        else if ($('ul li', v).length) {
-            vt = $('ul li', v).text();
-        } else {
-            v.children().remove();
-            vt = v.text();
-        }
-        var f = this.innerHTML;
-        flds[f] = 1;
-        val[f] = vt;
-    });
-    return val;
-}
-
-function makeCSV(flds, vals) {
-    var csv = '';
-    csv = $.map(flds,function(v,k){
-        var l=k.length-1;
-        return '"' + (k[l]===':' ? k.substring(0,l) : k) + '"';
-    }).join(',') + '\r\n';
-
-    for (var i=0,l=vals.length; i<l; i++) {
-        var val = vals[i];
-        csv += $.map(flds,function(v,k){
-            return '"' + (val[k] || '').trim().replace('"', '""') + '"';
-        }).join(',') + '\r\n';
+    function loadScript(src, callback) {
+        var s, r;
+        r = false;
+        s = document.createElement('script');
+        s.type = 'text/javascript';
+        s.src = src;
+        s.onload = s.onreadystatechange = function () {
+            if (!r && (!this.readyState || this.readyState === 'complete')) {
+                r = true;
+                callback();
+            }
+        };
+        document.body.appendChild(s);
     }
-    outputCSV(csv);
-}
 
-function outputCSV(csv) {
-    var a = document.createElement('a');
-    a.id = 'mysave';
-    a.download='LinkedIn connections export ' + getDate() + '.csv';
-    a.href='data:application/csv;charset=utf-8,' + encodeURI(csv);
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(document.getElementById('mysave'))        
-}
+    function getMemberIds() {
+        return $.map(
+            $('.contact-item-view:has(input:checked)').find('.name a'),
+            function (v) { return (/li_(\d+)/).exec(v.href)[1]; }
+        );
+    }
 
-function doExport() {
-    var ids = getMemberIds();
-    var flds = {'Name':1, 'Email:':1,'Title:':1,'Company:':1}, vals = [];
-    var cnt_left = ids.length;
-
-    ids.forEach(function (id) {
-        $.get('http://www.linkedin.com/people/conn-details', {contactMemberID: id}, function(s){
-            --cnt_left;
-            try {
-                vals.push(processConnDetails(s, flds));
-            } catch(e) { console.log(s); }
-            if (!cnt_left) makeCSV(flds, vals);
-        }).fail(function(){
-            cnt_left--;
+    function processConnDetails(s, flds) {
+        var val = {};
+        val.Name = $('.connection-name a', s)[0].innerHTML;
+        $('dt', s).each(function () {
+            var f, v = $(this).next('dd'),
+                vt = v.html(),
+                r = vt.match(/['"]mailto:([^'"]*)['"]/);
+            if (r !== null) {
+                vt = r[1];
+            } else if ($('ul li', v).length) {
+                vt = $('ul li', v).text();
+            } else {
+                v.children().remove();
+                vt = v.text();
+            }
+            f = this.innerHTML;
+            flds[f] = 1;
+            val[f] = vt;
         });
-    });    
-}
-
-function init() {
-    var footer = $('.abook-footer .outstanding');
-    if (footer.length && document.getElementById('export-sel-conns') == null) {
-        $('<span> | <span>').appendTo(footer);
-  	$('<a id="export-sel-conns" style="cursor:pointer"><strong>Export selected</strong></a>').appendTo(footer).click(doExport);
+        return val;
     }
-    if (run) doExport();
-}
 
-if (window.location.host != 'www.linkedin.com' || window.location.pathname != '/people/connections') {
-    alert('Instructions:\n\nPlease run this script on page http://www.linkedin.com/people/connections\nFor this log in to LinkedIn and go to Contacts > Connections. There select connections you want to export and run this script.');
-    return;
-}
+    function outputCSV(csv) {
+        var a = document.createElement('a');
+        a.id = 'mysave';
+        a.download = 'LinkedIn connections export ' + getDate() + '.csv';
+        a.href = 'data:application/csv;charset=utf-8,' + encodeURI(csv);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(document.getElementById('mysave'));
+    }
 
-if (typeof jQuery !== 'function')
-    loadScript('http://code.jquery.com/jquery-latest.min.js', init);
-else
-    init();
-})(1);
+    function makeCSV(flds, vals) {
+        var i, l, val, csv = '', qoute_value;
+        csv = $.map(flds, function (v, k) {
+            l = k.length - 1;
+            return '"' + (k[l] === ':' ? k.substring(0, l) : k) + '"';
+        }).join(',') + '\r\n';
+
+        qoute_value = function (v, k) {
+            return '"' + (val[k] || '').trim().replace('"', '""') + '"';
+        };
+
+        for (i = 0, l = vals.length; i < l; i++) {
+            val = vals[i];
+            csv += $.map(flds, qoute_value).join(',') + '\r\n';
+        }
+        outputCSV(csv);
+    }
+
+    function doExport() {
+        var ids = getMemberIds(),
+            flds = {'Name': 1, 'Email:': 1, 'Title:': 1, 'Company:': 1}, vals = [],
+            cnt_all = ids.length;
+
+        if (!ids.length) {
+            alert('Please, specify contacts to process.');
+            return;
+        }
+
+        (function f() {
+            $('#da-box div').text('Processed ' + (cnt_all  - ids.length) + ' / ' + cnt_all + ' contacts');
+
+            if (!ids.length) {
+                $('#da-box').remove();
+                makeCSV(flds, vals);
+                return;
+            }
+            var mid = ids.shift();
+            $.ajax('http://www.linkedin.com/people/conn-details', {
+                data: {contactMemberID: mid},
+                success: function (s) {
+                    try {
+                        vals.push(processConnDetails(s, flds));
+                    } catch (e) { console.log(s); }
+                },
+                complete: f
+            });
+        }());
+    }
+
+    function init() {
+        $('#da-box').remove();
+        $('<div id="da-box"><p>Exporting connections</p><div></div></div>')
+        .css({
+            'background-color': 'white',
+            'border-top': '1px solid #D3D3D3',
+            'font': '700 12px arial',
+            'line-height': '30px',
+            'z-index': 20000,
+            'width': '300px',
+            'top': '70px',
+            'text-align': 'center',
+            'position': 'fixed',
+            'margin-left': '-150px',
+            'left': '50%',
+            'box-shadow': '0px 1px 1px rgba(0, 0, 0, 0.15), -1px 0px 0px rgba(0, 0, 0, 0.03), 1px 0px 0px rgba(0, 0, 0, 0.03), 0px 1px 0px rgba(0, 0, 0, 0.12)'
+        })
+        .find('div')
+        .css({
+            'height': '70px',
+            'line-height': '70px',
+            'font-weight': '400',
+            'font-size': '16px'
+        })
+        .addClass('engagement-action-container')
+        .parent()
+        .appendTo('body');
+
+        if (run) { doExport(); }
+    }
+
+    if (window.location.host !== 'www.linkedin.com' || window.location.pathname !== '/contacts/') {
+        alert('Instructions:\n\nPlease run this script on page http://www.linkedin.com/contacts/\nFor this log in to LinkedIn and go to Network > Contacts. There select connections you want to export and run this script.');
+        return;
+    }
+
+    if (typeof jQuery !== 'function') {
+        loadScript('http://code.jquery.com/jquery-latest.min.js', init);
+    } else {
+        init();
+    }
+}(1));
