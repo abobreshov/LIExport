@@ -3,6 +3,8 @@ LIExport
 
 LinkeIn Export Contacts tool
 
+In order to use export tool open LI.html in Chrome and drag and drop link to your bookmarklets bar.
+
 Helps export contacts from LinkedIn contacts page. More information and example of usage you can find here <http://blog.dataart.com/extending-linkedin-functionality-export-selected-connections-to-a-csv-file/>.
 
 *LI.min.js is using in blog post example
