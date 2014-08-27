@@ -1,7 +1,12 @@
 LIExport
 ========
 
-LinkeIn Export Contacts tool
+LinkeIn Export Contacts tool - give you a possibility to export 1st connections from Linkedin to Excel readable XML file.
+
+<b>Due to LinkedIn UI changes this script could not work, you can use it only for education purpose.</b> 
+
+<i>And yes we can fix it, but we can't deliver the fix to all persons who use this bookmarklet</i>
+<i>If you just want to use export functionality you can use this [chrome extension](https://chrome.google.com/webstore/detail/linkedin-export-tool/kgipmhdegifoehfbbffcfbmpfmbjaiem?utm_source=gmail).</i>
 
 In order to use export tool open LI.html in Chrome and drag and drop link to your bookmarklets bar.
 
